@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="UTF-8") as file:
 
 setup(
     name="metasequoia-connector",
-    version="0.0.5",
+    version="0.0.6",
     description="水杉工具箱：数据库连接器",
     long_description=long_description,
     long_description_content_type="text/markdown",
