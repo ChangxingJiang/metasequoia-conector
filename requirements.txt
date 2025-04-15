@@ -1,0 +1,7 @@
+DBUtils==2.0.1
+metasequoia_sql==0.6.0
+PyHive==0.7.0
+PyMySQL==1.1.0
+setuptools==70.0.0
+sshtunnel==0.4.0
+otssql==0.1.0

@@ -1,2 +1,1 @@
-# metasequoia-conector
-水杉连接器
+# 水杉工具箱：数据库连接器
