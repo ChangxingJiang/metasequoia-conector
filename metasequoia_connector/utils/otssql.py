@@ -16,7 +16,7 @@ def conn_select_all_as_dict(conn: otssql.Connection, sql: str) -> Tuple[Dict[str
 
 
 def select_all_as_dict(manager: ConnectManager, ots_name: str, sql: str, **params):
-    with manager.otssql_connect(ots_name, **params) as ots_conn:
+    with manager.otssql_new_connect(ots_name, **params) as ots_conn:
         return conn_select_all_as_dict(conn=ots_conn, sql=sql)
 
 
@@ -27,7 +27,7 @@ def conn_select_one_as_dict(conn: otssql.Connection, sql: str) -> Dict[str, Any]
 
 
 def select_one_as_dict(manager: ConnectManager, ots_name: str, sql: str):
-    with manager.otssql_connect(ots_name) as ots_conn:
+    with manager.otssql_new_connect(ots_name) as ots_conn:
         return conn_select_one_as_dict(conn=ots_conn, sql=sql)
 
 
@@ -40,5 +40,5 @@ def conn_execute_and_commit(conn: otssql.Connection, sql: str) -> int:
 
 
 def execute_and_commit(manager: ConnectManager, ots_name: str, sql: str) -> int:
-    with manager.otssql_connect(ots_name) as ots_conn:
+    with manager.otssql_new_connect(ots_name) as ots_conn:
         return conn_execute_and_commit(conn=ots_conn, sql=sql)

@@ -111,7 +111,8 @@ class ConnectManager:
                              port=mysql_info["port"],
                              user=mysql_info["user"],
                              passwd=mysql_info["passwd"],
-                             ssh_tunnel=ssh_tunnel)
+                             ssh_tunnel=ssh_tunnel,
+                             name=name)
 
     def mysql_refer_name(self, name: str) -> str:
         """获取 MySQL 的名称"""

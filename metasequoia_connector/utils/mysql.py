@@ -337,6 +337,7 @@ def insert_dataclass_list(manager: ConnectManager, mysql_name: str, db_name: str
 
 def conn_insert_or_update_dataclass(conn: pymysql.Connection,
                                     table_name: str,
+                                    unique_key: List[str],
                                     write_data: dataclasses.dataclass) -> int:
     """将 dataclass 对象写入到 table_name 中
 
@@ -346,6 +347,8 @@ def conn_insert_or_update_dataclass(conn: pymysql.Connection,
         MySQL 连接
     table_name : str
         表名，可以是 table_name 或 schema_name.table_name
+    unique_key : List[str]
+        表唯一键，在 ON DUPLICATE KEY UPDATE 时不更新这些字段
     write_data : dataclasses.dataclass
         dataclasses 对象
 
@@ -354,39 +357,40 @@ def conn_insert_or_update_dataclass(conn: pymysql.Connection,
     int
         影响的记录数
     """
-    # 获取 dataclasses 对象中的所有列
-    column_name_list = [field.name for field in dataclasses.fields(write_data)]
-
-    # 生成所有列的清单
-    column_name_list_str = ",".join(f"`{column_name}`" for column_name in column_name_list)
+    # 获取所有列的清单
+    column_list = [field.name for field in dataclasses.fields(write_data)]
+    column_list_str = ",".join(column_list)
 
     # 生成每个字段格式化后的值的列表
-    value_list = [to_quote_str_none_as_null(getattr(write_data, column_name)) for column_name in column_name_list]
+    value_list = [to_quote_str_none_as_null(getattr(write_data, column_name)) for column_name in column_list]
     value_list_str = ",".join(value_list)
 
-    # 生成 ON DUPLICATE KEY UPDATE 语句
-    update_list = [f"`{column_name}` = VALUES(`{column_name}`)" for column_name in column_name_list]
-    update_list_str = ",".join(update_list)
+    # 计算所有需要更新的字段
+    update_column_list = [f"`{field}`=VALUES(`{field}`)" for field in column_list if field not in unique_key]
+    update_column_list_str = ",".join(update_column_list)
 
-    sql = (f"INSERT INTO `{table_name}` ({column_name_list_str}) "
+    sql = (f"INSERT INTO `{table_name}` ({column_list_str}) "
            f"VALUES ({value_list_str}) "
-           f"ON DUPLICATE KEY UPDATE {update_list_str}")
+           f"ON DUPLICATE KEY UPDATE {update_column_list_str}")
 
     return conn_execute_and_commit(conn, sql)
 
 
 def insert_or_update_dataclass(manager: ConnectManager, mysql_name: str, db_name: str,
                                table_name: str,
+                               unique_key: List[str],
                                write_data: dataclasses.dataclass) -> int:
     """【执行】执行 SQL 语句并提交，返回影响行数"""
     with manager.mysql_connect(mysql_name, db_name) as mysql_conn:
-        return conn_insert_or_update_dataclass(conn=mysql_conn, table_name=table_name, write_data=write_data)
+        return conn_insert_or_update_dataclass(conn=mysql_conn, table_name=table_name, unique_key=unique_key,
+                                               write_data=write_data)
 
 
 def conn_insert_into_or_update_by_dataclass_list(conn: pymysql.Connection,
                                                  table_name: str,
                                                  unique_key: List[str],
-                                                 write_list: List[dataclasses.dataclass]) -> int:
+                                                 write_list: List[dataclasses.dataclass],
+                                                 batch_size: int = 100) -> int:
     """将 data 中的 dataclass 格式数据写入到 table_name 中，如果有重复值，则更新除 unique_key 之外的字段
 
     语句逻辑：
@@ -402,6 +406,8 @@ def conn_insert_into_or_update_by_dataclass_list(conn: pymysql.Connection,
         表唯一键，在 ON DUPLICATE KEY UPDATE 时不更新这些字段
     write_list : List[dataclasses.dataclass]
         记录的列表，要求每条记录拥有相同的结构（将根据第 1 条记录获取数据结构）
+    batch_size : int, default = 100
+        每批写入的数据量
 
     Returns
     -------
@@ -417,20 +423,25 @@ def conn_insert_into_or_update_by_dataclass_list(conn: pymysql.Connection,
 
     # 计算所有需要更新的字段
     update_column_list = [f"`{field}`=VALUES(`{field}`)" for field in column_list if field not in unique_key]
-    update_column_list_str = ",".join(update_column_list)
+    if len(update_column_list) > 0:
+        update_column_list_str = "ON DUPLICATE KEY UPDATE " + ",".join(update_column_list)
+    else:
+        update_column_list_str = ""
 
     # 获取每条记录的值的列表
-    value_list = []
-    for write_data in write_list:
-        # 获取当前记录中每个字段的格式化后的值的列表
-        cell_list = [to_quote_str_none_as_null(getattr(write_data, column))
-                     for column in column_list]
-        value_str = ",".join(cell_list)
-        value_list.append(f"({value_str})")
-    value_list_str = ",".join(value_list)
-    sql = (f"INSERT INTO `{table_name}` ({column_list_str}) VALUES {value_list_str} "
-           f"ON DUPLICATE KEY UPDATE {update_column_list_str}")
-    return conn_execute_and_commit(conn, sql)
+    res = 0
+    for i in range(0, len(write_list), batch_size):
+        value_list = []
+        for write_data in write_list[i: min(i + batch_size, len(write_list))]:
+            # 获取当前记录中每个字段的格式化后的值的列表
+            cell_list = [to_quote_str_none_as_null(getattr(write_data, column))
+                         for column in column_list]
+            value_str = ",".join(cell_list)
+            value_list.append(f"({value_str})")
+        value_list_str = ",".join(value_list)
+        sql = f"INSERT INTO `{table_name}` ({column_list_str}) VALUES {value_list_str} {update_column_list_str}"
+        res += conn_execute_and_commit(conn, sql)
+    return res
 
 
 def insert_or_update_dataclass_list(manager: ConnectManager, mysql_name: str, db_name: str,
