@@ -8,6 +8,13 @@ from metasequoia_connector.connector import HiveConnector
 from metasequoia_connector.node import HiveInstance
 
 
+def conn_select_all_as_tuple(hive_conn: hive.Connection, sql: str):
+    """执行 Hive 语句"""
+    with hive_conn.cursor() as cursor:
+        cursor.execute(sql)
+        return cursor.fetchall()
+
+
 def execute(hive_instance: HiveInstance, sql: str):
     """执行 Hive 语句"""
     with HiveConnector(hive_instance) as conn:

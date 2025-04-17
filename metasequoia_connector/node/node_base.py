@@ -8,7 +8,8 @@ from typing import Optional
 from metasequoia_connector.node.data_type import DataType
 
 __all__ = [
-    "DataInstanceBase"
+    "DataInstanceBase",
+    "DataEntityBase"
 ]
 
 
@@ -28,3 +29,11 @@ class DataInstanceBase(abc.ABC):
     def name(self) -> Optional[str]:
         """返回数据实例的实例名称"""
         return self._name
+
+
+class DataEntityBase(abc.ABC):
+    """数据实体的抽象基类"""
+
+    @abc.abstractmethod
+    def standard_name(self) -> str:
+        """返回数据实体的标准名称"""

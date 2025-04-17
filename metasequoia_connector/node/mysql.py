@@ -1,7 +1,7 @@
-import dataclasses
 from typing import Optional
 
 from metasequoia_connector.node.data_type import DataType
+from metasequoia_connector.node.node_base import DataEntityBase
 from metasequoia_connector.node.node_base import DataInstanceBase
 from metasequoia_connector.node.ssh_tunnel import SshTunnel
 
@@ -11,8 +11,10 @@ __all__ = ["MysqlInstance", "MysqlTable"]
 class MysqlInstance(DataInstanceBase):
     """MySQL 实例"""
 
-    def __init__(self, host: str, port: int, user: str, passwd: str,
-                 ssh_tunnel: Optional[SshTunnel] = None, name: Optional[str] = None):
+    def __init__(self,
+                 host: str, port: int, user: str, passwd: str,
+                 ssh_tunnel: Optional[SshTunnel] = None,
+                 name: Optional[str] = None):
         super().__init__(DataType.MYSQL, name)
         self._host = host
         self._port = port
@@ -65,10 +67,45 @@ class MysqlInstance(DataInstanceBase):
                 f"ssh_tunnel={self._ssh_tunnel})")
 
 
-@dataclasses.dataclass(slots=True, frozen=True, eq=True)
-class MysqlTable:
+class MysqlTable(DataEntityBase):
     """MySQL 表"""
 
-    instance: MysqlInstance = dataclasses.field(kw_only=True)
-    schema: str = dataclasses.field(kw_only=True)
-    table: str = dataclasses.field(kw_only=True)
+    def __init__(self, instance: MysqlInstance, schema: str, table: str):
+        super().__init__()
+        self._instance = instance  # 所属 MySQL 实例
+        self._schema = schema  # 所属数据库
+        self._table = table  # 表名
+
+    @property
+    def instance(self) -> MysqlInstance:
+        return self._instance
+
+    @property
+    def schema(self) -> str:
+        return self._schema
+
+    @property
+    def table(self) -> str:
+        return self._table
+
+    def standard_name(self) -> str:
+        return f"MySQL|{self._instance.name}:{self._schema}.{self._table}"
+
+    def __hash__(self):
+        """根据 instance、schema 和 table 计算哈希值"""
+        return hash((self._instance, self._schema, self._table))
+
+    def __eq__(self, other):
+        """定义两个 MysqlTable 对象相等的条件"""
+        if not isinstance(other, MysqlTable):
+            return None
+        return (self._instance == other._instance
+                and self._schema == other._schema
+                and self._table == other._table
+                )
+
+    def __repr__(self):
+        return (f"MysqlTable("
+                f"instance={self._instance}, "
+                f"schema={self._schema}, "
+                f"table={self._table})")

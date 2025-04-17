@@ -277,7 +277,7 @@ class ConnectManager:
         hive_info = self.hive_dict(name)
         ssh_tunnel = self.ssh_tunnel_obj(hive_info["use_ssh"]) if hive_info.get("use_ssh") else None
         return HiveInstance(hosts=hive_info["hosts"], port=hive_info["port"], username=hive_info.get("username"),
-                            ssh_tunnel=ssh_tunnel)
+                            ssh_tunnel=ssh_tunnel, name=name)
 
     # ------------------------------ 读取 DolphinScheduler 相关配置 ------------------------------
 
