@@ -12,7 +12,6 @@ def from_environment(environ_name: Optional[str] = None, mode: str = "dev") -> C
 
 
 # 定义连接器的别名
-connect_dolphin_meta = DSMetaConnector  # 定义海豚元数据连接器的别名
 connect_hive = HiveConnector  # 定义 Hive 连接器的别名
 connect_kafka_admin_client = ConnKafkaAdminClient  # 定义 Kafka 管理客户端连接器的别名
 connect_kafka_consumer = ConnKafkaConsumer  # 定义 Kafka 消费者连接器的别名

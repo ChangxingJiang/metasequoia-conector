@@ -46,4 +46,4 @@ class DSProcessTask:
 class DSMetaInstance(MysqlInstance):
     """海豚调度元数据实例"""
 
-    db: str = dataclasses.field(kw_only=True)
+    schema: str = dataclasses.field(kw_only=True)

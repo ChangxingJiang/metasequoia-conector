@@ -5,7 +5,7 @@ from metasequoia_connector.node.node_base import DataEntityBase
 from metasequoia_connector.node.node_base import DataInstanceBase
 from metasequoia_connector.node.ssh_tunnel import SshTunnel
 
-__all__ = ["MysqlInstance", "MysqlTable"]
+__all__ = ["MysqlInstance", "MysqlSchema", "MysqlTable"]
 
 
 class MysqlInstance(DataInstanceBase):
@@ -67,6 +67,42 @@ class MysqlInstance(DataInstanceBase):
                 f"ssh_tunnel={self._ssh_tunnel})")
 
 
+class MysqlSchema(DataEntityBase):
+    """MySQL 库"""
+
+    def __init__(self, instance: MysqlInstance, schema: str):
+        super().__init__()
+        self._instance = instance  # 所属 MySQL 实例
+        self._schema = schema  # 库名
+
+    @property
+    def instance(self) -> MysqlInstance:
+        return self._instance
+
+    @property
+    def schema(self) -> str:
+        return self._schema
+
+    def standard_name(self) -> str:
+        return f"MySQL|{self._instance.name}:{self._schema}"
+
+    def __hash__(self):
+        """根据 instance 和 schema 计算哈希值"""
+        return hash((self._instance, self._schema))
+
+    def __eq__(self, other):
+        """定义两个 MysqlTable 对象相等的条件"""
+        if not isinstance(other, MysqlSchema):
+            return None
+        return (self._instance == other._instance
+                and self._schema == other._schema)
+
+    def __repr__(self):
+        return (f"MysqlTable("
+                f"instance={self._instance}, "
+                f"schema={self._schema})")
+
+
 class MysqlTable(DataEntityBase):
     """MySQL 表"""
 
@@ -101,8 +137,7 @@ class MysqlTable(DataEntityBase):
             return None
         return (self._instance == other._instance
                 and self._schema == other._schema
-                and self._table == other._table
-                )
+                and self._table == other._table)
 
     def __repr__(self):
         return (f"MysqlTable("

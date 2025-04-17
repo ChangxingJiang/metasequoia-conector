@@ -6,14 +6,14 @@ from typing import Any, Dict, List, Optional, Tuple
 import dbutils.pooled_db
 import redis
 
-from metasequoia_connector.connector import DSMetaConnector
 from metasequoia_connector.connector.common import WrapConnector
 from metasequoia_connector.connector.kafka import ConnKafkaConsumer
 from metasequoia_connector.connector.mysql import MysqlConnectionPool, MysqlConnector
 from metasequoia_connector.connector.ots import OTSConnector
 from metasequoia_connector.connector.redis import RedisConnectionPool, RedisConnector
-from metasequoia_connector.node import (DSMetaInstance, HiveInstance, KafkaServer, KafkaTopic, KafkaTopicsGroup,
+from metasequoia_connector.node import (HiveInstance, KafkaServer, KafkaTopic, KafkaTopicsGroup,
                                         MysqlInstance, OTSInstance, RedisDatabase, RedisInstance, SshTunnel)
+from metasequoia_connector.node import MysqlSchema
 
 __all__ = ["ConnectManager"]
 
@@ -113,6 +113,14 @@ class ConnectManager:
                              passwd=mysql_info["passwd"],
                              ssh_tunnel=ssh_tunnel,
                              name=name)
+
+    def get_mysql_schema(self, name: str, schema: str) -> MysqlSchema:
+        """获取 MysqlSchema 对象"""
+        mysql_instance = self.mysql_obj(name)
+        return MysqlSchema(
+            instance=mysql_instance,
+            schema=schema
+        )
 
     def mysql_refer_name(self, name: str) -> str:
         """获取 MySQL 的名称"""
@@ -278,35 +286,6 @@ class ConnectManager:
         ssh_tunnel = self.ssh_tunnel_obj(hive_info["use_ssh"]) if hive_info.get("use_ssh") else None
         return HiveInstance(hosts=hive_info["hosts"], port=hive_info["port"], username=hive_info.get("username"),
                             ssh_tunnel=ssh_tunnel, name=name)
-
-    # ------------------------------ 读取 DolphinScheduler 相关配置 ------------------------------
-
-    def dolphin_meta_list(self) -> List[str]:
-        """获取海豚调度元数据清单"""
-        return self._get_name_list("DolphinMeta")
-
-    def dolphin_meta_dict(self, name: str) -> Dict[str, Any]:
-        """获取海豚调度元数据信息"""
-        return self._confirm_params("DolphinMeta", self._get_section("DolphinMeta", name),
-                                    ["host", "port", "user", "passwd"])
-
-    def dolphin_meta_obj(self, name: str) -> DSMetaInstance:
-        """获取海豚调度元数据的 DolphinMetaInstance 对象"""
-        dolphin_meta_info = self.dolphin_meta_dict(name)
-        ssh_tunnel = self.ssh_tunnel_obj(dolphin_meta_info["use_ssh"]) if dolphin_meta_info.get("use_ssh") else None
-        return DSMetaInstance(
-            host=dolphin_meta_info["host"],
-            port=dolphin_meta_info["port"],
-            user=dolphin_meta_info["user"],
-            passwd=dolphin_meta_info["passwd"],
-            db=dolphin_meta_info["db"],
-            ssh_tunnel=ssh_tunnel
-        )
-
-    def dolphin_meta_new_connect(self, name: str):
-        """根据海豚元数据名称，创建海豚元数据连接器"""
-        dolphin_meta_instance = self.dolphin_meta_obj(name)
-        return DSMetaConnector(dolphin_scheduler_meta_info=dolphin_meta_instance)
 
     # ------------------------------ 读取 OTS 相关配置 ------------------------------
 
