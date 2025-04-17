@@ -6,7 +6,7 @@ import dataclasses
 
 from metasequoia_connector.node.mysql import MysqlInstance
 
-__all__ = ["DSProcess", "DSTask", "DSProcessTask", "DSMetaInstance"]
+__all__ = ["DSProcess", "DSTask", "DSProcessTask"]
 
 
 @dataclasses.dataclass(slots=True, frozen=True, eq=True)
@@ -40,10 +40,3 @@ class DSProcessTask:
     def get_process_url(self, domain: str):
         """获取工作流定义的 Url"""
         return f"{domain}/dolphinscheduler/ui/projects/{self.project_code}/workflow/definitions/{self.process_code}"
-
-
-@dataclasses.dataclass(slots=True, frozen=True, eq=True)
-class DSMetaInstance(MysqlInstance):
-    """海豚调度元数据实例"""
-
-    schema: str = dataclasses.field(kw_only=True)
