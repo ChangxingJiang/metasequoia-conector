@@ -7,14 +7,25 @@ with open("README.md", "r", encoding="UTF-8") as file:
 
 setup(
     name="metasequoia-connector",
-    version="0.0.6",
+    version="0.0.7",
     description="水杉工具箱：数据库连接器",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="changxing",
     author_email="1278729001@qq.com",
     url="",
-    install_requires=["otssql", "DBUtils", "PyHive", "PyMySQL", "setuptools", "sshtunnel", "metasequoia_sql"],
+    install_requires=[
+        "otssql",
+        "DBUtils",
+        "PyHive",
+        "PyMySQL",
+        "setuptools",
+        "sshtunnel",
+        "metasequoia_sql",
+        "kafka-python",
+        "redis",
+        "thrift"
+    ],
     license="MIT License",
     packages=find_packages(),
     platforms=["all"],
